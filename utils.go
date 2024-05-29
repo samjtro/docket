@@ -13,8 +13,8 @@ import (
 )
 
 type DOCKET struct {
-	Calendar []EVENT
-	Todo     []TASK
+	Calendar []CALENDAR
+	Todo     []TODO
 }
 
 type CALENDAR struct {
@@ -48,49 +48,60 @@ type TASKWITHSUBTASKS struct {
 	Tasks   []TASK
 }
 
-func CreateCalendar(name string) {
-	err := os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), name), []byte(""), 0777)
-	Check(err)
+func createCalendar(name string) {
+	err := os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", homeDir(), name), []byte("c"), 0777)
+	check(err)
 }
 
+func createTodo(name string) {
+	err := os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", homeDir(), name), []byte("t"), 0777)
+	check(err)
+}
+
+func renameCalendar(oldName, newName string) {}
+func renameTodo(oldName, newName string)     {}
+
+func parseCalendar() {}
+func parseTodo()     {}
+
 // Format: d add event {calendarName} {name} {timestamp} {duration}
-func CreateEvent(calendarName, name string, timestamp, duration int) {
+func createEvent(calendarName, name string, timestamp, duration int) {
 	var details string
 	fmt.Printf("Enter event details: ")
 	fmt.Scanln(&details)
 	eventJson, err := json.Marshal(EVENT{
-		ID:        GenerateID(name),
+		ID:        generateID(name),
 		Name:      name,
 		Details:   details,
 		Timestamp: timestamp,
 		Duration:  duration,
 	})
-	Check(err)
+	check(err)
 
-	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), calendarName), eventJson, 0644)
-	Check(err)
+	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", homeDir(), calendarName), eventJson, 0644)
+	check(err)
 }
 
 // Format: d add task {calendarName} {name} {timestamp} {duration}
-func CreateTask(calendarName, name string, dueDate int) {
+func createTask(calendarName, name string, dueDate int) {
 	var details string
 	fmt.Printf("Enter task details: ")
 	fmt.Scanln(&details)
 	taskJson, err := json.Marshal(TASK{
-		ID:      GenerateID(name),
+		ID:      generateID(name),
 		Details: details,
 		DueDate: dueDate,
 	})
-	Check(err)
+	check(err)
 
-	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), calendarName), taskJson, 0644)
-	Check(err)
+	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", homeDir(), calendarName), taskJson, 0644)
+	check(err)
 }
 
 // func CreateTaskWithSubTask() {}
-func Search() {}
+func search() {}
 
-func Glance(period string) {
+func glance(period string) {
 	if period == "day" {
 
 	} else if period == "week" {
@@ -102,7 +113,7 @@ func Glance(period string) {
 	}
 }
 
-func ExecCommand(cmd *exec.Cmd) {
+func execCommand(cmd *exec.Cmd) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
@@ -112,23 +123,23 @@ func ExecCommand(cmd *exec.Cmd) {
 	}
 }
 
-func Check(err error) {
+func check(err error) {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 }
 
-func HomeDir() string {
+func homeDir() string {
 	currentUser, err := user.Current()
-	Check(err)
+	check(err)
 
 	return fmt.Sprintf("/home/%s", currentUser.Username)
 }
 
-func GenerateID(name string) string {
+func generateID(name string) string {
 	newSha := sha1.New()
 	_, err := newSha.Write([]byte(name + strconv.FormatInt(time.Now().Unix(), 10)))
-	Check(err)
+	check(err)
 
 	return string(newSha.Sum(nil))
 }

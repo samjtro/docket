@@ -1,50 +1,94 @@
 package main
 
+import (
+	"crypto/sha1"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"os/user"
+	"strconv"
+	"time"
+)
+
 type DOCKET struct {
 	Calendar []EVENT
-	Todo []TASK
+	Todo     []TASK
 }
 
-type Calendar struct {
-	ID string
+type CALENDAR struct {
+	ID     string
 	Events []EVENT
 }
 
-type Todo struct {
-	ID string
+type TODO struct {
+	ID    string
 	Tasks []TASK
 }
 
 type EVENT struct {
-	ID string
-	Name string
-	Details string
+	ID        string
+	Name      string
+	Details   string
 	Timestamp int
-	Duration int
-	Location string
+	Duration  int
 }
 
 type TASK struct {
-	ID string
+	ID      string
 	Details string
-	Timestamp int
+	DueDate int
 }
 
-func CreateCalendar() {
-	
+type TASKWITHSUBTASKS struct {
+	ID      string
+	Details string
+	DueDate int
+	Tasks   []TASK
 }
 
-func CreateEvent() {
-	
+func CreateCalendar(name string) {
+	err := os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), name), []byte(""), 0777)
+	Check(err)
 }
 
-func CreateTask() {
-	
+// Format: d add event {calendarName} {name} {timestamp} {duration}
+func CreateEvent(calendarName, name string, timestamp, duration int) {
+	var details string
+	fmt.Printf("Enter event details: ")
+	fmt.Scanln(&details)
+	eventJson, err := json.Marshal(EVENT{
+		ID:        GenerateID(name),
+		Name:      name,
+		Details:   details,
+		Timestamp: timestamp,
+		Duration:  duration,
+	})
+	Check(err)
+
+	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), calendarName), eventJson, 0644)
+	Check(err)
 }
 
-func Search() {
+// Format: d add task {calendarName} {name} {timestamp} {duration}
+func CreateTask(calendarName, name string, dueDate int) {
+	var details string
+	fmt.Printf("Enter task details: ")
+	fmt.Scanln(&details)
+	taskJson, err := json.Marshal(TASK{
+		ID:      GenerateID(name),
+		Details: details,
+		DueDate: dueDate,
+	})
+	Check(err)
 
+	err = os.WriteFile(fmt.Sprintf("%s/.foo/docket/elements/%s.json", HomeDir(), calendarName), taskJson, 0644)
+	Check(err)
 }
+
+// func CreateTaskWithSubTask() {}
+func Search() {}
 
 func Glance(period string) {
 	if period == "day" {
@@ -66,4 +110,25 @@ func ExecCommand(cmd *exec.Cmd) {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+}
+
+func Check(err error) {
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+}
+
+func HomeDir() string {
+	currentUser, err := user.Current()
+	Check(err)
+
+	return fmt.Sprintf("/home/%s", currentUser.Username)
+}
+
+func GenerateID(name string) string {
+	newSha := sha1.New()
+	_, err := newSha.Write([]byte(name + strconv.FormatInt(time.Now().Unix(), 10)))
+	Check(err)
+
+	return string(newSha.Sum(nil))
 }
